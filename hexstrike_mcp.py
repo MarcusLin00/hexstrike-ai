@@ -1140,6 +1140,48 @@ def setup_mcp_server(hexstrike_client: HexStrikeClient) -> FastMCP:
         return result
 
     @mcp.tool()
+    def medusa_scan(
+        target: str,
+        username: str = "",
+        username_file: str = "",
+        password: str = "",
+        password_file: str = "",
+        module: str = "smbnt",
+        additional_args: str = "",
+    ) -> Dict[str, Any]:
+        """
+        Execute Medusa for credential discovery with enhanced logging.
+
+        Args:
+            target: The target IP or hostname
+            username: Single username to test
+            username_file: File containing usernames
+            password: Single password to test
+            password_file: File containing passwords
+            module: The Medusa module to use (default: smbnt)
+            additional_args: Additional Medusa arguments
+
+        Returns:
+            Credential attack results
+        """
+        data = {
+            "target": target,
+            "username": username,
+            "username_file": username_file,
+            "password": password,
+            "password_file": password_file,
+            "module": module,
+            "additional_args": additional_args,
+        }
+        logger.info(f"🔑 Starting Medusa attack: {target}:{module}")
+        result = hexstrike_client.safe_post("api/tools/medusa", data)
+        if result.get("success"):
+            logger.info(f"✅ Medusa attack completed for {target}")
+        else:
+            logger.error(f"❌ Medusa attack failed for {target}")
+        return result
+
+    @mcp.tool()
     def john_crack(
         hash_file: str,
         wordlist: str = "/usr/share/wordlists/rockyou.txt",

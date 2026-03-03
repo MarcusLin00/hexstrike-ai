@@ -11142,6 +11142,52 @@ def hydra():
             "error": f"Server error: {str(e)}"
         }), 500
 
+@app.route("/api/tools/medusa", methods=["POST"])
+def medusa():
+    """Execute Medusa password auditing tool with enhanced logging"""
+    try:
+        params = request.json
+        target = params.get("target", "")
+        username = params.get("username", "")
+        username_file = params.get("username_file", "")
+        password = params.get("password", "")
+        password_file = params.get("password_file", "")
+        module = params.get("module", "smbnt")
+        additional_args = params.get("additional_args", "")
+
+        if not target:
+            logger.warning("🎯 Medusa called without target parameter")
+            return jsonify({"error": "Target parameter is required"}), 400
+
+        if not (username or username_file) or not (password or password_file):
+            logger.warning("🔑 Medusa called without username/password parameters")
+            return jsonify({
+                "error": "Username/username_file and password/password_file are required"
+            }), 400
+
+        command = f"medusa -h {target} -M {module}"
+
+        if username:
+            command += f" -u {username}"
+        elif username_file:
+            command += f" -U {username_file}"
+
+        if password:
+            command += f" -p {password}"
+        elif password_file:
+            command += f" -P {password_file}"
+
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"🔑 Starting Medusa attack: {target}:{module}")
+        result = execute_command(command)
+        logger.info(f"📊 Medusa attack completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in medusa endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
 @app.route("/api/tools/john", methods=["POST"])
 def john():
     """Execute john with enhanced logging"""
